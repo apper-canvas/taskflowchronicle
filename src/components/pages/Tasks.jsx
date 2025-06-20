@@ -51,18 +51,30 @@ const Tasks = () => {
     >
       {/* Header */}
       <div className="flex-shrink-0 p-6 border-b border-gray-200 bg-surface">
-        <div className="flex items-center justify-between mb-4">
+<div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-display font-bold text-gray-900">
             Tasks
           </h1>
-          <Button
-            onClick={() => handleEditTask()}
-            icon="Plus"
-            size="sm"
-            className="md:hidden"
-          >
-            Add Task
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => handleEditTask()}
+              icon="Plus"
+              size="md"
+              variant="primary"
+              className="md:hidden shadow-md hover:shadow-lg font-medium px-4 py-2 text-white bg-primary hover:bg-primary/90 transition-all duration-200"
+            >
+              Create Task
+            </Button>
+            <Button
+              onClick={() => handleEditTask()}
+              icon="Plus"
+              size="md"
+              variant="primary"
+              className="hidden md:flex shadow-md hover:shadow-lg font-medium px-6 py-2.5 text-white bg-primary hover:bg-primary/90 transition-all duration-200"
+            >
+              Create New Task
+            </Button>
+          </div>
         </div>
         
         <SearchBar
