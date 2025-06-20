@@ -21,14 +21,14 @@ const taskService = {
     return { ...task };
   },
 
-  async getByCategory(categoryId) {
+async getByCategory(categoryId) {
     await delay(250);
-    return tasks.filter(t => t.categoryId === categoryId && !t.archived).map(t => ({ ...t }));
+    return tasks.filter(t => t.categoryId === categoryId && !t.archived && !t.parentId).map(t => ({ ...t }));
   },
 
-  async getCompleted() {
+async getCompleted() {
     await delay(250);
-    return tasks.filter(t => t.completed && !t.archived).map(t => ({ ...t }));
+    return tasks.filter(t => t.completed && !t.archived && !t.parentId).map(t => ({ ...t }));
   },
 
   async getArchived() {
@@ -36,18 +36,18 @@ const taskService = {
     return tasks.filter(t => t.archived).map(t => ({ ...t }));
   },
 
-  async search(query) {
+async search(query) {
     await delay(200);
     const lowercaseQuery = query.toLowerCase();
     return tasks.filter(t => 
-      !t.archived && (
+      !t.archived && !t.parentId && (
         t.title.toLowerCase().includes(lowercaseQuery) ||
         t.description.toLowerCase().includes(lowercaseQuery)
       )
     ).map(t => ({ ...t }));
   },
 
-  async create(taskData) {
+async create(taskData) {
     await delay(300);
     const maxId = tasks.length > 0 ? Math.max(...tasks.map(t => t.Id)) : 0;
     const newTask = {
@@ -60,7 +60,8 @@ const taskService = {
       completed: false,
       completedAt: null,
       createdAt: new Date().toISOString(),
-      archived: false
+      archived: false,
+      parentId: taskData.parentId || null
     };
     tasks.push(newTask);
     return { ...newTask };
@@ -79,11 +80,28 @@ const taskService = {
       Id: tasks[index].Id // Prevent ID modification
     };
     
-    // Handle completion
+// Handle completion
     if (updateData.completed && !tasks[index].completed) {
       updatedTask.completedAt = new Date().toISOString();
     } else if (!updateData.completed && tasks[index].completed) {
       updatedTask.completedAt = null;
+    }
+    
+    // Handle subtask completion cascading
+    if (updateData.completed !== undefined && tasks[index].parentId) {
+      const parentTask = tasks.find(t => t.Id === tasks[index].parentId);
+      if (parentTask) {
+        const siblings = tasks.filter(t => t.parentId === parentTask.Id);
+        const completedSiblings = siblings.filter(t => t.Id === updatedTask.Id ? updateData.completed : t.completed);
+        
+        // Auto-complete parent if all subtasks are completed
+        if (completedSiblings.length === siblings.length && siblings.length > 0) {
+          const parentIndex = tasks.findIndex(t => t.Id === parentTask.Id);
+          if (parentIndex !== -1 && !tasks[parentIndex].completed) {
+            tasks[parentIndex] = { ...tasks[parentIndex], completed: true, completedAt: new Date().toISOString() };
+          }
+        }
+      }
     }
     
     tasks[index] = updatedTask;
@@ -119,8 +137,40 @@ const taskService = {
         deletedTasks.push({ ...tasks[index] });
         tasks.splice(index, 1);
       }
-    });
+});
     return deletedTasks;
+  },
+
+  async getSubtasks(parentId) {
+    await delay(200);
+    const parentIdInt = parseInt(parentId, 10);
+    return tasks.filter(t => t.parentId === parentIdInt && !t.archived).map(t => ({ ...t }));
+  },
+
+  async createSubtask(parentId, taskData) {
+    await delay(300);
+    const parentIdInt = parseInt(parentId, 10);
+    const parentTask = tasks.find(t => t.Id === parentIdInt);
+    if (!parentTask) {
+      throw new Error(`Parent task with ID ${parentId} not found`);
+    }
+    
+    const maxId = tasks.length > 0 ? Math.max(...tasks.map(t => t.Id)) : 0;
+    const newSubtask = {
+      Id: maxId + 1,
+      title: taskData.title,
+      description: taskData.description || '',
+      categoryId: taskData.categoryId || parentTask.categoryId,
+      priority: taskData.priority || 'medium',
+      dueDate: taskData.dueDate || null,
+      completed: false,
+      completedAt: null,
+      createdAt: new Date().toISOString(),
+      archived: false,
+      parentId: parentIdInt
+    };
+    tasks.push(newSubtask);
+    return { ...newSubtask };
   }
 };
 

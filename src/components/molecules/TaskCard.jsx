@@ -1,17 +1,22 @@
-import { motion } from 'framer-motion';
-import { format, parseISO, isToday, isPast } from 'date-fns';
-import Checkbox from '@/components/atoms/Checkbox';
-import Badge from '@/components/atoms/Badge';
-import ApperIcon from '@/components/ApperIcon';
-
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { format, isPast, isToday, parseISO } from "date-fns";
+import Checkbox from "@/components/atoms/Checkbox";
+import Badge from "@/components/atoms/Badge";
+import ApperIcon from "@/components/ApperIcon";
+import { taskService } from "@/services";
 const TaskCard = ({ 
   task, 
   onToggleComplete, 
   onEdit, 
   onDelete,
   onArchive,
-  className = '' 
+  className = '',
+  isSubtask = false
 }) => {
+  const [subtasks, setSubtasks] = useState([]);
+  const [showSubtasks, setShowSubtasks] = useState(false);
+  const [loadingSubtasks, setLoadingSubtasks] = useState(false);
   const formatDueDate = (dateString) => {
     if (!dateString) return null;
     const date = parseISO(dateString);
@@ -25,7 +30,7 @@ const TaskCard = ({
     if (isToday(date)) return 'text-warning';
     if (isPast(date)) return 'text-error';
     return 'text-gray-500';
-  };
+};
 
   const handleToggleComplete = () => {
     if (onToggleComplete) {
@@ -33,6 +38,35 @@ const TaskCard = ({
     }
   };
 
+  const loadSubtasks = async () => {
+    if (isSubtask) return; // Prevent nested subtasks
+    
+    setLoadingSubtasks(true);
+    try {
+      const result = await taskService.getSubtasks(task.Id);
+      setSubtasks(result);
+    } catch (err) {
+      console.error('Failed to load subtasks:', err);
+    } finally {
+      setLoadingSubtasks(false);
+    }
+  };
+
+  const toggleSubtasks = () => {
+    if (!showSubtasks && subtasks.length === 0) {
+      loadSubtasks();
+    }
+    setShowSubtasks(!showSubtasks);
+  };
+
+  useEffect(() => {
+    if (!isSubtask) {
+      loadSubtasks();
+    }
+  }, [task.Id, isSubtask]);
+
+  const completedSubtasks = subtasks.filter(st => st.completed).length;
+  const hasSubtasks = subtasks.length > 0;
   return (
     <motion.div
       layout
@@ -82,7 +116,7 @@ const TaskCard = ({
             <Badge variant={task.priority} size="xs">
               {task.priority}
             </Badge>
-          </div>
+</div>
 
           {/* Task Meta */}
           <div className="flex items-center justify-between mt-3">
@@ -99,10 +133,33 @@ const TaskCard = ({
                   {formatDueDate(task.dueDate)}
                 </span>
               )}
+
+              {/* Subtask Count */}
+              {!isSubtask && hasSubtasks && (
+                <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded-full flex items-center gap-1">
+                  <ApperIcon name="List" size={12} />
+                  {completedSubtasks}/{subtasks.length}
+                </span>
+              )}
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {!isSubtask && (
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSubtasks();
+                  }}
+                  className="p-1 text-gray-400 hover:text-primary transition-colors"
+                  title={showSubtasks ? "Hide subtasks" : "Show subtasks"}
+                >
+                  <ApperIcon name={showSubtasks ? "ChevronUp" : "ChevronDown"} size={14} />
+                </motion.button>
+              )}
+              
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -130,6 +187,35 @@ const TaskCard = ({
               </motion.button>
             </div>
           </div>
+
+          {/* Subtasks */}
+          {!isSubtask && showSubtasks && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 pl-4 border-l-2 border-gray-100 space-y-2"
+            >
+              {loadingSubtasks ? (
+                <div className="text-xs text-gray-500 py-2">Loading subtasks...</div>
+              ) : subtasks.length > 0 ? (
+                subtasks.map(subtask => (
+                  <TaskCard
+                    key={subtask.Id}
+                    task={subtask}
+                    onToggleComplete={onToggleComplete}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onArchive={onArchive}
+                    isSubtask={true}
+                    className="scale-95 bg-gray-50"
+                  />
+                ))
+              ) : (
+                <div className="text-xs text-gray-500 py-2">No subtasks yet</div>
+              )}
+            </motion.div>
+          )}
         </div>
       </div>
     </motion.div>
