@@ -1,0 +1,62 @@
+[
+  {
+    "Id": 1,
+    "title": "Review quarterly reports",
+    "description": "Analyze Q3 performance metrics and prepare summary for board meeting",
+    "categoryId": "work",
+    "priority": "high",
+    "dueDate": "2024-01-15",
+    "completed": false,
+    "completedAt": null,
+    "createdAt": "2024-01-10T09:00:00Z",
+    "archived": false
+  },
+  {
+    "Id": 2,
+    "title": "Grocery shopping",
+    "description": "Buy ingredients for weekend dinner party - salmon, vegetables, wine",
+    "categoryId": "personal",
+    "priority": "medium",
+    "dueDate": "2024-01-14",
+    "completed": true,
+    "completedAt": "2024-01-13T14:30:00Z",
+    "createdAt": "2024-01-12T08:15:00Z",
+    "archived": false
+  },
+  {
+    "Id": 3,
+    "title": "Complete React training module",
+    "description": "Finish advanced hooks section and submit practice exercises",
+    "categoryId": "learning",
+    "priority": "medium",
+    "dueDate": "2024-01-18",
+    "completed": false,
+    "completedAt": null,
+    "createdAt": "2024-01-08T11:20:00Z",
+    "archived": false
+  },
+  {
+    "Id": 4,
+    "title": "Schedule dentist appointment",
+    "description": "Book routine cleaning for next month",
+    "categoryId": "health",
+    "priority": "low",
+    "dueDate": null,
+    "completed": false,
+    "completedAt": null,
+    "createdAt": "2024-01-11T16:45:00Z",
+    "archived": false
+  },
+  {
+    "Id": 5,
+    "title": "Plan team building event",
+    "description": "Research venues and activities for Q1 team outing",
+    "categoryId": "work",
+    "priority": "urgent",
+    "dueDate": "2024-01-16",
+    "completed": false,
+    "completedAt": null,
+    "createdAt": "2024-01-09T13:30:00Z",
+    "archived": false
+  }
+]
